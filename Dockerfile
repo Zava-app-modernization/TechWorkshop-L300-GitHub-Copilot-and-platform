@@ -1,12 +1,12 @@
 # =============================================================================
 # ZavaStorefront Dockerfile
-# Multi-stage build for .NET 6.0 ASP.NET Core Web Application
+# Multi-stage build for .NET 8.0 ASP.NET Core Web Application
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # Stage 1: Build
 # -----------------------------------------------------------------------------
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy project file and restore dependencies
@@ -28,7 +28,7 @@ RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 # -----------------------------------------------------------------------------
 # Stage 3: Runtime
 # -----------------------------------------------------------------------------
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
 # Expose port 80 for HTTP traffic
