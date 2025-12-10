@@ -67,6 +67,9 @@ var aiServicesName = 'ais-${resourcePrefixDash}-${uniqueSuffix}'
 // AcrPull role definition ID
 var acrPullRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
 
+// Cognitive Services OpenAI User role definition ID
+var cognitiveServicesOpenAIUserRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
+
 // -----------------------------------------------------------------------------
 // Log Analytics Workspace (using Azure Verified Module)
 // -----------------------------------------------------------------------------
@@ -166,6 +169,18 @@ module aiServices 'br/public:avm/res/cognitive-services/account:0.10.1' = {
           capacity: 10
         }
       }
+      {
+        name: 'phi-4'
+        model: {
+          format: 'Microsoft'
+          name: 'Phi-4'
+          version: '7'
+        }
+        sku: {
+          name: 'GlobalStandard'
+          capacity: 1
+        }
+      }
     ]
   }
 }
@@ -217,6 +232,14 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
           name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
           value: 'false'
         }
+        {
+          name: 'AzureAI__Endpoint'
+          value: 'https://${aiServicesName}.cognitiveservices.azure.com/'
+        }
+        {
+          name: 'AzureAI__DeploymentName'
+          value: 'phi-4'
+        }
       ]
     }
   }
@@ -239,6 +262,28 @@ resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
   scope: existingAcr
   properties: {
     roleDefinitionId: acrPullRoleDefinitionId
+    principalId: webApp.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Cognitive Services OpenAI User Role Assignment (Web App -> AI Services)
+// Allows Web App to call the OpenAI endpoints using managed identity
+// -----------------------------------------------------------------------------
+
+resource existingAiServices 'Microsoft.CognitiveServices/accounts@2023-10-01-preview' existing = {
+  name: aiServicesName
+  dependsOn: [
+    aiServices
+  ]
+}
+
+resource cognitiveServicesRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(existingAiServices.id, webApp.id, cognitiveServicesOpenAIUserRoleId)
+  scope: existingAiServices
+  properties: {
+    roleDefinitionId: cognitiveServicesOpenAIUserRoleId
     principalId: webApp.identity.principalId
     principalType: 'ServicePrincipal'
   }
