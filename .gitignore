@@ -91,7 +91,7 @@ htmlcov/
 .ipynb_checkpoints
 
 # Docker
-**/Dockerfile*
+# **/Dockerfile*  # Commented out - we need Dockerfile tracked
 **/.dockerignore
 docker-compose.override.yml
 
